@@ -72,7 +72,8 @@ sub cstolower {
 	$e;
 }
 
-use vars qw( $LEFTMIN $RIGHTMIN );
+use vars qw( $LEFTMIN $RIGHTMIN $VERSION );
+$VERSION = 0.120;
 $LEFTMIN = 2;
 $RIGHTMIN = 2;
 
@@ -93,7 +94,7 @@ sub process_patterns {
 		$end = 1 if s!\.$!!;
 		s!\\v\s+(.)!$BACKV{$1}!g;	# process the \v tag
 		s!\\'(.)!$BACKAP{$1}!g;		# process the \' tag
-		s!\^\^(..)!chr(hex($1))!g;
+		s!\^\^(..)!chr(hex($1))!eg;
 					# convert things like ^^fc
 		s!(\D)(?=\D)!${1}0!g;		# insert zeroes
 		s!^(?=\D)!0!;		# and start with some digit

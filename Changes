@@ -1,4 +1,9 @@
 
+0.120 Wed Apr 24 12:20:07 MET DST 2002
+
+	Fix for ^^hex notation, spotted and patch provided by Pasi
+	Ryhanen.
+
 0.111 Tue Dec 11 15:45:25 MET 2001
 
 	Support for leftmin and rightmin parameters fixed.
