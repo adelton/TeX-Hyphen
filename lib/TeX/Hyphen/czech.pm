@@ -73,7 +73,7 @@ sub cstolower {
 }
 
 use vars qw( $LEFTMIN $RIGHTMIN $VERSION );
-$VERSION = 0.120;
+$VERSION = 0.121;
 $LEFTMIN = 2;
 $RIGHTMIN = 2;
 
