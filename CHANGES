@@ -1,0 +1,5 @@
+Revision history for module TeX::Hyphen.
+
+0.03 Sun Feb 16 13:55:26 MET 1997
+	Hash lookup made faster.
+
