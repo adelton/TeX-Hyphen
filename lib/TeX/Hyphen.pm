@@ -95,7 +95,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '0.130';
+$VERSION = '0.140';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -103,6 +103,8 @@ $DEBUG ||= 0;
 # To protect beginning and end of the word from hyphenation
 $LEFTMIN = 2;
 $RIGHTMIN = 2;
+
+my (@DATA, $DATA_LOADED);
 
 # #############################################################
 # Constructor. Parameter specifies file with patterns.
@@ -112,7 +114,7 @@ $RIGHTMIN = 2;
 sub new {
 	my $class = shift;
 	my ($file, %opts);
-	if (scalar(keys %opts) % 2 == 1) {
+	if (scalar(@_) % 2) {
 		$file = shift;
 		%opts = @_;
 	} else {
@@ -120,7 +122,10 @@ sub new {
 		$file = $opts{'file'};
 	}
 	if (not defined $file) {
-		*FILE = \*DATA;
+		if (not defined $DATA_LOADED) {
+			@DATA = <DATA>;
+			$DATA_LOADED = 1;
+		}
 	} else {
 		open FILE, $file or do {
 			$errstr = "Error opening file `$file': $!";
@@ -158,7 +163,10 @@ sub new {
 	$leftmin = $opts{leftmin} if exists $opts{leftmin};
 	$rightmin = $opts{rightmin} if exists $opts{rightmin};
 
-	while (<FILE>) {
+	my $i = 0;
+	while ((defined $file and defined($_ = <FILE>))
+		or (not defined $file and defined($_ = $DATA[$i]))) {
+		$i++;
 		s/\%.*$//;			# comment out
 		next if 1 .. /\\patterns{/;	# find the \patterns section
 		
@@ -168,15 +176,17 @@ sub new {
 			$process_patterns->($_, $bothhyphen, $beginhyphen,
 			$endhyphen, $hyphen);
 	}
-	my $tell = $. + 1;
-	while (<FILE>) {
-		next if (( $. == $tell) .. /\\hyphenation{/);
+	my $tell = $i + 1;
+	while ((defined $file and defined($_ = <FILE>))
+		or (not defined $file and defined($_ = $DATA[$i]))) {
+		$i++;
+		next if (( $i == $tell) .. /\\hyphenation{/);
 
 		chomp;
 
 		last unless $process_hyphenation->($_, $exception);
 	}
-	close FILE;
+	close FILE if not defined $file;
 	$self->{hyphen} = $hyphen;
 	$self->{begin} = $beginhyphen;
 	$self->{end} = $endhyphen;
@@ -358,7 +368,7 @@ Original name B<Hyphen> chaged to B<TeX::Hyphen>.
 
 =head1 VERSION
 
-0.130
+0.140
 
 =head1 SEE ALSO
 
@@ -366,7 +376,7 @@ perl(1), TeX::Hyphen::czech.
 
 =head1 AUTHOR
 
-(c) 1997--2001 Jan Pazdziora, adelton@fi.muni.cz
+(c) 1997--2002 Jan Pazdziora, adelton@fi.muni.cz
 at Faculty of Informatics, Masaryk University, Brno
 
 =cut

@@ -1,4 +1,12 @@
 
+0.140 Tue Sep 24 22:30:46 MET DST 2002
+
+	Fixed the support for new with odd number of parameters, bug
+	reported by Christophe Hermier.
+
+	Added support for multiple objects that all use the internal
+	hyphenation file.
+
 0.130 Fri Aug 23 10:32:11 MET DST 2002
 
 	Added Russian parsing module, provided by Eugene Morozov.
