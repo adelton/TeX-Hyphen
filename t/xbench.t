@@ -19,7 +19,7 @@ my $hyp = new TeX::Hyphen;
 my $t1 = new Benchmark;
 my $file = 'Hyphen.pm';
 my $size = -s $file;
-print STDERR "\nWill hyphenate file $file (size $size)\n";
+print STDERR "\nWill hyphenate file $file (size $size bytes)\n";
 
 open README, $file or die "Error reading $file";
 my $line;

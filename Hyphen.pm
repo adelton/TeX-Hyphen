@@ -49,7 +49,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN );
 
-$VERSION = '0.10';
+$VERSION = '0.101';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -99,31 +99,42 @@ sub new
 	my $exception = {};
 	while (<FILE>)
 		{
-		next if 1 .. /\\patterns{/;
-		last if /^\}/;
+		s/\%.*$//;			# comment out
+		next if 1 .. /\\patterns{/;	# find the \patterns section
+		last if /\}/;			# and just stay in it
+		
 		chomp;
 
-		my $begin = 0;
-		my $end = 0;
+		for (split /\s+/) {
+			next if $_ eq '';
 
-		$begin = 1 if s!^\.!!;
-		$end = 1 if s!\.$!!;
-		s!\\v\s+(.)!$BACKV{$+}!g;
-		s!\\'(.)!$BACKAP{$+}!g;
-		s!(\D)(?=\D)!$+0!g;
-		s!^(?=\D)!0!;
-		($tag = $_) =~ s!\d!!g;
-		($value = $_) =~ s!\D!!g;
-		$tag = cstolower($tag);
-	
-		if ($begin and $end)
-			{ $bothhyphen->{$tag} = $value; }
-		elsif ($begin)
-			{ $beginhyphen->{$tag} = $value; }
-		elsif ($end)
-			{ $endhyphen->{$tag} = $value; }
-		else
-			{ $hyphen->{$tag} = $value; }
+			my $begin = 0;
+			my $end = 0;
+
+			$begin = 1 if s!^\.!!;
+			$end = 1 if s!\.$!!;
+			s!\\v\s+(.)!$BACKV{$1}!g;	# process the \v tag
+			s!\\'(.)!$BACKAP{$1}!g;		# process the \' tag
+			s!\^\^(..)!chr(hex($1))!g;
+						# convert things like ^^fc
+			s!(\D)(?=\D)!${1}0!g;		# insert zeroes
+			s!^(?=\D)!0!;		# and start with some digit
+			
+			($tag = $_) =~ s!\d!!g;		# get the string
+			($value = $_) =~ s!\D!!g;	# and numbers apart
+			$tag = cstolower($tag);		# convert to lowercase
+				# (if we knew locales are fine everywhere,
+				# we could use them)
+		
+			if ($begin and $end)
+				{ $bothhyphen->{$tag} = $value; }
+			elsif ($begin)
+				{ $beginhyphen->{$tag} = $value; }
+			elsif ($end)
+				{ $endhyphen->{$tag} = $value; }
+			else
+				{ $hyphen->{$tag} = $value; }
+			}
 		}
 	my $tell = $. + 1;
 	while (<FILE>)
@@ -298,6 +309,11 @@ sub visualize
 
 =over
 
+=item 0.101 trial Wed Nov  3 16:06:02 MET 1999
+
+Parsing of patterns extended to allow other styles as well -- Spanish
+pattern file provided by Adrian Perez Jorge.
+
 =item 0.10 Fri Dec 11 10:58:01 MET 1998
 
 Bug fixes concering LEFTMIN and RIGHTMIN values and use of exceptions
@@ -330,7 +346,7 @@ Original name B<Hyphen> chaged to B<TeX::Hyphen>.
 
 =head1 VERSION
 
-0.10
+0.101
 
 =head1 SEE ALSO
 
@@ -338,8 +354,7 @@ perl(1).
 
 =head1 AUTHOR
 
-(c) 1997 Jan Pazdziora, adelton@fi.muni.cz
-
+(c) 1997, 1999 Jan Pazdziora, adelton@fi.muni.cz
 at Faculty of Informatics, Masaryk University, Brno
 
 =cut
