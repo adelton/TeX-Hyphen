@@ -95,7 +95,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '0.110';
+$VERSION = '0.111';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -155,6 +155,8 @@ sub new {
 			return;
 		}
 	}
+	$leftmin = $opts{leftmin} if exists $opts{leftmin};
+	$rightmin = $opts{rightmin} if exists $opts{rightmin};
 
 	while (<FILE>) {
 		s/\%.*$//;			# comment out
