@@ -1,4 +1,8 @@
 
+0.130 Fri Aug 23 10:32:11 MET DST 2002
+
+	Added Russian parsing module, provided by Eugene Morozov.
+
 0.121 Wed Apr 24 12:20:07 MET DST 2002
 
 	Fix for ^^hex notation, spotted and patch provided by Pasi

@@ -95,7 +95,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '0.121';
+$VERSION = '0.130';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -358,7 +358,7 @@ Original name B<Hyphen> chaged to B<TeX::Hyphen>.
 
 =head1 VERSION
 
-0.121
+0.130
 
 =head1 SEE ALSO
 
