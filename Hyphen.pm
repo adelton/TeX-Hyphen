@@ -10,7 +10,8 @@ TeX::Hyphen -- hyphenate words using TeX's patterns
 	use TeX::Hyphen;
 	my $hyp = new TeX::Hyphen "hyphen.tex";
 	my $word = "representation";
-	print $hyp->visualize($word, $hyp->hyphenate($word)), "\n";
+	my @points = $hyp->hyphenate($word);
+	print $hyp->visualize($word), "\n";
 
 =head1 DESCRIPTION
 
@@ -27,15 +28,27 @@ be used to restrict minimal starting and ending substring where it is
 not possible to hyphenate. They both default to 2 but should be
 changed to match the paratemers used to generate the patterns.
 
+Variable C<$TeX::Hyphen::DEBUG> will tell on standard error output the
+alocation of buckets.
+
+The file with hyphenation patterns may contain \' and \v accents, used
+in Czech language.
+
 =cut
 
-$VERSION = 0.03;
+$VERSION = '0.04';
+sub Version	{ $VERSION; }
+
+$DEBUG = 0;
+sub DEBUG	{ $DEBUG; }
 
 # To protect beginning and end of the word from hyphenation
 $LEFTMIN = 2;
 $RIGHTMIN = 2;
 
-# TeX conversions done for Czech language \'a, \v r
+# ######################################################
+# TeX conversions done for Czech language, eg. \'a, \v r
+#
 %BACKV = ( 'c' => 'è', 'd' => 'ï', 'e' => 'ì', 'l' => 'µ',
 	'n' => 'ò', 'r' => 'ø', 's' => '¹', 't' => '»', 'z' => '¾',
 	'C' => 'È', 'D' => 'Ï', 'E' => 'Ì', 'L' => '¥', 'N' => 'Ò',
@@ -50,8 +63,11 @@ sub cstolower
 	$e;
 	}
 
-# Constructor. Parameter specifies file with patterns. File is
-# searched for \patterns{ ... } section and this is used.
+# ####################################################
+# Constructor. Parameter specifies file with patterns.
+# File is # searched for \patterns{ ... } section and
+# this is used.
+#
 sub new
 	{
 	my ($class, $file) = @_;
@@ -59,110 +75,149 @@ sub new
 	my $self = {};
 	bless $self, $class;
 
+	local ($/) = "\n";
 	my $notstarted = 1;
 	my %hyphen = ();
 	my %beginhyphen = ();
 	my %endhyphen = ();
+	my %bothhyphen = ();
 	while (<FILE>)
 		{
-		if (/\\patterns{/)
-			{ $notstarted = 0 ; next; }
-		next if ($notstarted);
-		last if (/}/);
+		if ($notstarted)
+			{
+			$notstarted = 0 if (/\\patterns{/);
+			next;
+			}
 		chomp;
 
-		my $tag = $_;
-		my ($begin, $end) = (0, 0);
-		$begin = 1 if ($tag =~ s/^\.//);
-		$end = 1 if ($tag =~ s/\.$//);
-		
-		$tag =~ s/\\'\s*([\S\D])/$BACKAP{$1}/g;
-		$tag =~ s/\\v\s*([\S\D])/$BACKV{$1}/g;
-		
-		$tag =~ s/^(\D)/0${1}/;
-		$tag =~ s/(\D)(?=\D|$)/${1}0/g;
+		my $begin = 0;
+		my $end = 0;
 
-		my $value = $tag;
-		$tag =~ s/\d//g;
-		$value =~ s/[^\d]//g;
+		$begin = 1 if s!^\.!!;
+		$end = 1 if s!\.$!!;
+		s!\\v\s+(.)!$BACKV{$+}!g;
+		s!\\'(.)!$BACKAP{$+}!g;
+		s!(\D)(?=\D)!$+0!g;
+		s!^(?=\D)!0!;
+		($tag = $_) =~ s!\d!!g;
+		($value = $_) =~ s!\D!!g;
 
-		$self->{hyphen}{$tag} = $value unless ($begin or $end);
-		$self->{beginhyphen}{$tag} = 1 if ($begin;
-		$self->{endhyphen}{$tag} = 1 if ($end);
+		if ($begin and $end)
+			{ $bothhyphen{$tag} = $value; }
+		elsif ($begin)
+			{ $beginhyphen{$tag} = $value; }
+		elsif ($end)
+			{ $endhyphen{$tag} = $value; }
+		else
+			{ $hyphen{$tag} = $value; }
 		}
 	close FILE;
+	$self->{hyphen} = { %hyphen };
+	$self->{begin} = { %beginhyphen };
+	$self->{end} = { %endhyphen };
+	$self->{both} = { %bothhyphen };
+	print STDERR 'All ', scalar %hyphen,
+		' (', scalar keys %hyphen,
+		'), begin ', scalar %beginhyphen,
+		' (', scalar keys %beginhyphen,
+		'), end ', scalar %endhyphen,
+		' (', scalar keys %endhyphen,
+		'), both ', scalar %bothhyphen,
+		' (', scalar keys %bothhyphen, ")\n" if DEBUG;
+		
 	$self;
 	}
 
-# For given word finds places for hyphenation. Returns an array
-# specifying the places.
+# ############################################
+# For given word finds places for hyphenation.
+# Returns an array specifying the places.
+#
 sub hyphenate
 	{
-	my ($self, $word) = @_;
+	my ($self, $word) = (shift, shift);
 	
 	my $hyphen = $self->{hyphen};
 	my $beginhyphen = $self->{beginhyphen};
 	my $endhyphen = $self->{endhyphen};
+	my $bothhyphen = $self->{endhyphen};
 
 	my $totallength = length $word;
 	my @result = (0) x ($totallength + 1);
+
+	# walk the word
+	my $rightstop = $totallength - $RIGHTMIN;
 	my $pos;
-	for $pos (0 .. $totallength - 1)
+	for ($pos = 0; $pos <= $rightstop; $pos++)
 		{
+		# length of the rest of the word
 		my $restlength = $totallength - $pos;
+		# length of a substring
 		my $length;
-		for $length (1 .. $restlength)
+		for ($length = 1; $length <= $restlength; $length++)
 			{
 			my $substr = substr $word, $pos, $length;
 			my $value;
+			my $j;
 			if ($value = $hyphen->{$substr})
 				{
-				my $j = $pos;
-				while ($value =~ /(.)/g)
+				$j = $pos;
+				while ($value =~ /(.)/sg)
 					{
-					$result[$j] = $1 if ($1 > $result[$j]);
+					$result[$j] = $+ if ($+ > $result[$j]);
 					$j++;
 					}
 				}
 			if (($pos == 0) and $value = $beginhyphen->{$substr})
 				{
-				my $j = $pos;
-				while ($value =~ /(.)/g)
+				$j = $pos;
+				while ($value =~ /(.)/sg)
 					{
-					$result[$j] = $1 if ($1 > $result[$j]);
+					$result[$j] = $+ if ($+ > $result[$j]);
 					$j++;
 					}
 				}
 			if (($restlength == $length) and
 				$value = $endhyphen->{$substr})
 				{
-				my $j = $pos;
-				while ($value =~ /(.)/g)
+				$j = $pos;
+				while ($value =~ /(.)/sg)
 					{
-					$result[$j] = $1 if ($1 > $result[$j]);
+					$result[$j] = $+ if ($+ > $result[$j]);
 					$j++;
 					}
 				}
 			}
 		}
-	
+	my $value;
+	if ($value = $bothhyphen->{$word})
+		{
+		my $j = $pos;
+		while ($value =~ /(.)/sg)
+			{
+			$result[$j] = $+ if ($+ > $result[$j]);
+			$j++;
+			}
+
+		}
+
 	$result[0] = 0;
-	pop @result;
 	my @out = ();
-	for $pos ($LEFTMIN .. $#result - $RIGHTMIN + 1)
+	for $pos ($LEFTMIN .. $rightstop)
 		{
 		push @out, $pos if ($result[$pos] % 2);
 		}
 	@out;
 	}
 
-# For a word and a result of hyphenate inserts - into the string
+# #########################################
+# For a word show the result of hyphenation
+#
 sub visualize
 	{
-	my ($self, $word, @result) = @_;
+	my ($self, $word) = (shift, shift);
 	my $number = 0;
 	my $pos;
-	for $pos (@result)
+	for $pos ($self->hyphenate($word))
 		{
 		substr($word, $pos + $number, 0) = "-";
 		$number++;
@@ -170,15 +225,16 @@ sub visualize
 	$word;
 	}
 
-sub Version
-	{
-	my $self = shift;
-	$VERSION;
-	}
-
 =head1 CHANGES
 
 =over
+
+=item 0.04 Wed Apr  9 15:41:32 MET DST 1997
+
+Hash lookup made faster.
+
+Method C<TeX::Hyphen::visualize> only takes one argument, it calls
+C<hyphenate>.
 
 =item 0.03 Sun Feb 16 13:55:26 MET 1997
 
@@ -195,7 +251,7 @@ but probably never will be fixed.
 
 =head1 VERSION
 
-0.03
+0.04
 
 =head1 SEE ALSO
 

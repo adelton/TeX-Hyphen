@@ -1,17 +1,30 @@
 
-Module TeX::Hyphen: hyphenate words using TeX's patterns
+Module TeX::Hyphen:
+
+	Hyphenate words using TeX's patterns
 
 Installation:
 
-perl Makefile.PL
-make
-make install
+	perl Makefile.PL
+	make
+	make install
+
+Use:
+	use TeX::Hyphen;
+	my $hyp = new TeX::Hyphen "hyphen.tex";
+	my $word = "representation";
+	my @points = $hyp->hyphenate($word);
 
 Todo list:
 
-Tests.
+	Tests.
 
-Copyright (c) 1997 Jan Pazdziora, adelton@fi.muni.cz. All rights reserved.
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself. 
+Available:
+
+	http://www.fi.muni.cz/~adelton/perl/ and on your favorite CPAN
+	site (http://www.perl.com/perl/CPAN/).
+
+Copyright: (c) 1997 Jan Pazdziora, adelton@fi.muni.cz. All rights
+	reserved.  This program is free software; you can redistribute
+	it and/or modify it under the same terms as Perl itself. 
 
