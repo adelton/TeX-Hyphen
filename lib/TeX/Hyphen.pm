@@ -8,7 +8,12 @@ TeX::Hyphen -- hyphenate words using TeX's patterns
 =head1 SYNOPSIS
 
 	use TeX::Hyphen;
-	my $hyp = new TeX::Hyphen "hyphen.tex";
+	my $hyp = new TeX::Hyphen 'file' => 'hyphen.tex',
+		'style' => 'czech', leftmin => 2,
+		rightmin => 2;
+
+	# my $hyp = new TeX::Hyphen "hyphen.tex";
+
 	my $word = "representation";
 	my @points = $hyp->hyphenate($word);
 	print $hyp->visualize($word), "\n";
@@ -21,17 +26,58 @@ calling a method of this object. If no file is specified, the default
 Donald E. Knuth's F<hyphen.tex>, that is included in this module, is
 used instead.
 
+=head2 Arguments to constructor
+
+You can pass arguments to the new() call as hash, possible options are
+
+=over 4
+
+=item file
+
+Name of the file with the patters. It will be loaded and the resulting
+object will be able to hyphenate according to patterns in that file.
+
+For convenience and backward compatibility, the file name can also be
+specified as the first (odd) parameter to new().
+
+=item style
+
+Various languages use special shortcuts to specify the patterns.
+Instead of doing the full TeX expansion, we use Perl code to parse the
+patterns. The style option loads TeX::Hyphen::name_of_the_style module
+and uses the parsing functions found in it.
+
+Currently, the default czech (which also works for English alright)
+and german are available. See the TeX::Hyphen::czech man page for more
+information, especially if you want to support other
+languages/styles.
+
+=item leftmin
+
+The minimum starting substring which will not be hyphenated. This
+overrides the default specified in the style file.
+
+=item rightmin
+
+The minimum ending substring which will not be hyphenated. This
+overrides the default specified in the style file.
+
+=back
+
+=head2 Methods that are supported
+
 Method hyphenate() returns list of places where the word can be
 divided, so
 
 	$hyp->visualize('representation')
 
-returns list (3, 5, 8, 10). Method visualize() can be used to show these
-poins, so
+returns list (3, 5, 8, 10).
+
+Method visualize() can be used to show these points, so
 
 	$hyp->visualize('representation')
 	
-should give C<rep-re-sen-ta-tion>.
+should return C<rep-re-sen-ta-tion>, at least for English patterns.
 
 Variables I<$TeX::Hyphen::LEFTMIN> and I<$TeX::Hyphen::RIGHTMIN> can
 be used to restrict minimal starting and ending substring where it is
@@ -47,9 +93,9 @@ used in the Czech (and other) languages.
 =cut
 
 use strict;
-use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN );
+use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '0.101';
+$VERSION = '0.110';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -58,35 +104,29 @@ $DEBUG ||= 0;
 $LEFTMIN = 2;
 $RIGHTMIN = 2;
 
-# ######################################################
-# TeX conversions done for Czech language, eg. \'a, \v r
-#
-my %BACKV = ( 'c' => 'Ë', 'd' => 'Ô', 'e' => 'Ï', 'l' => 'µ',
-	'n' => 'Ú', 'r' => '¯', 's' => 'π', 't' => 'ª', 'z' => 'æ',
-	'C' => '»', 'D' => 'œ', 'E' => 'Ã', 'L' => '•', 'N' => '“',
-	'R' => 'ÿ', 'S' => '©', 'T' => '´', 'Z' => 'Æ' );
-my %BACKAP = ( 'a' => '·', 'e' => 'È', 'i' => 'Ì', 'l' => 'Â',
-	'o' => 'Û', 'u' => '˙', 'y' => '˝', 'A' => '¡', 'E' => '…',
-	'I' => 'Õ', 'L' => '≈', 'O' => '”', 'U' => '⁄', 'Y' => '›');
-sub cstolower
-	{
-	my $e = shift;
-	$e =~ tr/[A-Z]¡ƒ»œ…ÃÀÕ≈•“”‘’÷ÿ©´⁄Ÿ€‹›¨Æ/[a-z]·‰ËÔÈÏÎÌÂµÚÛÙıˆ¯πª˙˘˚¸˝ºæ/;
-	$e;
-	}
-
 # #############################################################
 # Constructor. Parameter specifies file with patterns.
 # File is searched for \patterns{ ... } and \hyphenation{ ... }
 # sections and these are used.
 #
-sub new
-	{
-	my ($class, $file) = @_;
-	if (not defined $file)
-		{ *FILE = \*DATA; }
-	else
-		{ open FILE, $file or return; }
+sub new {
+	my $class = shift;
+	my ($file, %opts);
+	if (scalar(keys %opts) % 2 == 1) {
+		$file = shift;
+		%opts = @_;
+	} else {
+		%opts = @_;
+		$file = $opts{'file'};
+	}
+	if (not defined $file) {
+		*FILE = \*DATA;
+	} else {
+		open FILE, $file or do {
+			$errstr = "Error opening file `$file': $!";
+			return;
+		};
+	}
 	my $self = {};
 	bless $self, $class;
 
@@ -97,64 +137,43 @@ sub new
 	my $endhyphen = {};
 	my $bothhyphen = {};
 	my $exception = {};
-	while (<FILE>)
-		{
+
+	my ($process_patterns, $process_hyphenation);
+	my ($leftmin, $rightmin) = ($LEFTMIN, $RIGHTMIN);
+	if (not defined $opts{'style'}) {
+		$opts{'style'} = 'czech';	# for backward compatibility
+	}
+	if (defined $opts{'style'}) {
+		eval qq!use ${class}::$opts{'style'}!;
+		if (not $@) {
+			eval "\$process_patterns = \\&${class}::$opts{'style'}::process_patterns";
+			eval "\$process_hyphenation = \\&${class}::$opts{'style'}::process_hyphenation";
+			eval "\$leftmin = \$${class}::$opts{'style'}::LEFTMIN";
+			eval "\$rightmin = \$${class}::$opts{'style'}::RIGHTMIN";
+		} else {
+			$errstr = "Error loading style module $class::$opts{'style'}: $@";
+			return;
+		}
+	}
+
+	while (<FILE>) {
 		s/\%.*$//;			# comment out
 		next if 1 .. /\\patterns{/;	# find the \patterns section
-		last if /\}/;			# and just stay in it
 		
 		chomp;
 
-		for (split /\s+/) {
-			next if $_ eq '';
-
-			my $begin = 0;
-			my $end = 0;
-
-			$begin = 1 if s!^\.!!;
-			$end = 1 if s!\.$!!;
-			s!\\v\s+(.)!$BACKV{$1}!g;	# process the \v tag
-			s!\\'(.)!$BACKAP{$1}!g;		# process the \' tag
-			s!\^\^(..)!chr(hex($1))!g;
-						# convert things like ^^fc
-			s!(\D)(?=\D)!${1}0!g;		# insert zeroes
-			s!^(?=\D)!0!;		# and start with some digit
-			
-			($tag = $_) =~ s!\d!!g;		# get the string
-			($value = $_) =~ s!\D!!g;	# and numbers apart
-			$tag = cstolower($tag);		# convert to lowercase
-				# (if we knew locales are fine everywhere,
-				# we could use them)
-		
-			if ($begin and $end)
-				{ $bothhyphen->{$tag} = $value; }
-			elsif ($begin)
-				{ $beginhyphen->{$tag} = $value; }
-			elsif ($end)
-				{ $endhyphen->{$tag} = $value; }
-			else
-				{ $hyphen->{$tag} = $value; }
-			}
-		}
+		last unless
+			$process_patterns->($_, $bothhyphen, $beginhyphen,
+			$endhyphen, $hyphen);
+	}
 	my $tell = $. + 1;
-	while (<FILE>)
-		{
+	while (<FILE>) {
 		next if (( $. == $tell) .. /\\hyphenation{/);
-		last if /^\}/;
 
 		chomp;
 
-		s!\\v\s+(.)!$BACKV{$+}!g;
-		s!\\'(.)!$BACKAP{$+}!g;
-
-		($tag = $_) =~ s!-!!g;
-		$tag = cstolower($tag);
-		($value = '0' . $_) =~ s![^-](?=[^-])!0!g;
-		$value =~ s![^-]-!1!g;
-		$value =~ s![^01]!0!g;
-		
-		$exception->{$tag} = $value;
-		}
+		last unless $process_hyphenation->($_, $exception);
+	}
 	close FILE;
 	$self->{hyphen} = $hyphen;
 	$self->{begin} = $beginhyphen;
@@ -174,25 +193,25 @@ sub new
 		' (', scalar keys %$bothhyphen, ")\n" if $DEBUG;
 	
 	$self->{exact} = { %$exception };
+	$self->{leftmin} = $leftmin;
+	$self->{rightmin} = $rightmin;
 	$self;
-	}
+}
 
 # ############################################
 # For given word finds places for hyphenation.
 # Returns an array specifying the places.
 #
-sub hyphenate
-	{
+sub hyphenate {
 	my ($self, $word) = (shift, shift);
 
 	print STDERR "Hyphenate `$word'\n" if $DEBUG;
 	
 	my $exact = $self->{exact};
-	if (defined(my $res = $exact->{$word}))
-		{
+	if (defined(my $res = $exact->{$word})) {
 		print STDERR "Exact match $res\n" if $DEBUG;
 		return $self->make_result_list($res);
-		}
+	}
 
 	my $hyphen = $self->{hyphen};
 	my $beginhyphen = $self->{begin};
@@ -205,111 +224,102 @@ sub hyphenate
 	# walk the word
 	my $rightstop = $totallength - $RIGHTMIN;
 	my $pos;
-	for ($pos = 0; $pos <= $rightstop; $pos++)
-		{
+	for ($pos = 0; $pos <= $rightstop; $pos++) {
 			# length of the rest of the word
 		my $restlength = $totallength - $pos;
 			# length of a substring
 		my $length;
-		for ($length = 1; $length <= $restlength; $length++)
-			{
+		for ($length = 1; $length <= $restlength; $length++) {
 			my $substr = substr $word, $pos, $length;
 			my $value;
 			my $j;
 			my $letter;
-			if (defined($value = $hyphen->{$substr}))
-				{
+			if (defined($value = $hyphen->{$substr})) {
 				$j = $pos;
 				print STDERR "$j: $substr: $value\n" if $DEBUG > 2;
-				while ($value =~ /(.)/gs)
-					{
+				while ($value =~ /(.)/gs) {
 					$result[$j] = $1 if ($1 > $result[$j]);
 					$j++;
-					}
 				}
+			}
 			if (($pos == 0) and
-				defined($value = $beginhyphen->{$substr}))
-				{
+				defined($value = $beginhyphen->{$substr})) {
 				$j = 0;
 				print STDERR "$j: $substr: $value\n" if $DEBUG > 2;
-				while ($value =~ /(.)/gs)
-					{
+				while ($value =~ /(.)/gs) {
 					$result[$j] = $1 if ($1 > $result[$j]);
 					$j++;
-					}
 				}
+			}
 			if (($restlength == $length) and
-				defined($value = $endhyphen->{$substr}))
-				{
+				defined($value = $endhyphen->{$substr})) {
 				$j = $pos;
 				print STDERR "$j: $substr: $value\n" if $DEBUG > 2;
-				while ($value =~ /(.)/gs)
-					{
+				while ($value =~ /(.)/gs) {
 					$result[$j] = $1 if ($1 > $result[$j]);
 					$j++;
-					}
 				}
 			}
 		}
+	}
 	my $value;
 	my $letter;
-	if (defined($value = $bothhyphen->{$word}))
-		{
+	if (defined($value = $bothhyphen->{$word})) {
 		my $j = 0;
 		print STDERR "$j: $word: $value\n" if $DEBUG > 2;
-		while ($value =~ /(.)/gs)
-			{
+		while ($value =~ /(.)/gs) {
 			$result[$j] = $1 if ($1 > $result[$j]);
 			$j++;
-			}
 		}
+	}
 
 	my $result = join '', @result;
-	### substr($result, 0, $LEFTMIN + 1) = '0' x ($LEFTMIN + 1);
-	substr($result, 0, $LEFTMIN) = '0' x $LEFTMIN;
-	substr($result, -$RIGHTMIN) = '0' x $RIGHTMIN;
+	### substr($result, 0, $self->{leftmin} + 1) = '0' x ($self->{leftmin} + 1);
+	substr($result, 0, $self->{leftmin}) = '0' x $self->{leftmin};
+	substr($result, -$self->{rightmin}) = '0' x $self->{rightmin};
 
 	print STDERR "Result: $result\n" if $DEBUG;
 	return $self->make_result_list($result);
-	}
+}
 
 # ####################
 #
 #
-sub make_result_list
-	{
+sub make_result_list {
 	my ($self, $result) = @_;
 	my @result = ();
 	my $i = 0;
-	while ($result =~ /./g)
-		{
+	while ($result =~ /./g) {
 		push @result, $i if (int($&) % 2);
 		$i++;
-		}
-	@result;
 	}
+	@result;
+}
 
 # #########################################
 # For a word show the result of hyphenation
 #
-sub visualize
-	{
+sub visualize {
 	my ($self, $word) = (shift, shift);
 	my $number = 0;
 	my $pos;
-	for $pos ($self->hyphenate($word))
-		{
+	for $pos ($self->hyphenate($word)) {
 		substr($word, $pos + $number, 0) = "-";
 		$number++;
-		}
-	$word;
 	}
+	$word;
+}
 
 =head1 CHANGES
 
 =over
 
-=item 0.101 trial Wed Nov  3 16:06:02 MET 1999
+=item 0.110 Tue Dec 11 14:26:15 MET 2001
+
+Support for more languages made modular, code for German parsing
+provided by Slaven Rezic.
+
+=item 0.101 Wed Nov  3 16:06:02 MET 1999
 
 Parsing of patterns extended to allow other styles as well -- Spanish
 pattern file provided by Adrian Perez Jorge.
@@ -350,11 +360,11 @@ Original name B<Hyphen> chaged to B<TeX::Hyphen>.
 
 =head1 SEE ALSO
 
-perl(1).
+perl(1), TeX::Hyphen::czech.
 
 =head1 AUTHOR
 
-(c) 1997, 1999 Jan Pazdziora, adelton@fi.muni.cz
+(c) 1997--2001 Jan Pazdziora, adelton@fi.muni.cz
 at Faculty of Informatics, Masaryk University, Brno
 
 =cut

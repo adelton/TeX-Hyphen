@@ -5,10 +5,10 @@
 
 This is the README file for the TeX::Hyphen module. This module uses
 TeX style hyphenation patterns to find places in words to hyphenate.
-You can supply any hyphenation file you like. The use goes like
+You can supply any hyphenation file you like. The use goes like this
 
 	use TeX::Hyphen;
-	my $hyp = new TeX::Hyphen "hyphen.tex";
+	my $hyp = new TeX::Hyphen 'dehyphn.tex', 'style' => 'german';
 	my $word = "representation";
 	my @points = $hyp->hyphenate($word);
 
@@ -20,14 +20,15 @@ Installation:
 
 Problems and bug reports:
 	Please report bug reports to my address. Include word
-	TeX::Hyphen in the Subject line of your mail. If you find this
-	module usefull, let me know as well.
+	TeX::Hyphen in the Subject line of your mail. Do not include
+	word Help in the Subject line of your mail. If you find this
+	module usefull, I'd appreciate if you let me know as well.
 
 Available:
 	http://www.fi.muni.cz/~adelton/perl/ and from your favorite
 	CPAN site in the authors/id/JANPAZ/ directory.
 
-Copyright: (c) 1997--1998 Jan Pazdziora, adelton@fi.muni.cz. All rights
+Copyright: (c) 1997--2001 Jan Pazdziora, adelton@fi.muni.cz. All rights
 	reserved.  This program is free software; you can redistribute
 	it and/or modify it under the same terms as Perl itself. 
 

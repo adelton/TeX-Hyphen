@@ -14,6 +14,10 @@ print "ok 1\n";
 
 my $hyp = new TeX::Hyphen;
 
+if (not defined $hyp) {
+	print STDERR "Loading the patterm file failed with: $TeX::Hyphen::errstr\n";
+}
+
 my ($word, $result, $expected);
 
 sub test_hyp ($$$)

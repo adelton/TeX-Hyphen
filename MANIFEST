@@ -1,7 +1,9 @@
-CHANGES
-Hyphen.pm
+Changes
 MANIFEST
 Makefile.PL
 README
+lib/TeX/Hyphen.pm
+lib/TeX/Hyphen/czech.pm
+lib/TeX/Hyphen/german.pm
 t/hyphen.t
 t/xbench.t
