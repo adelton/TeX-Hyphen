@@ -2,7 +2,7 @@
 
 use strict;
 
-BEGIN { $| = 1; print "1..2\n"; }
+BEGIN { $| = 1; print "1..4\n"; }
 
 END {print "not ok 1\n" unless $::loaded_hyphen;}
 
@@ -15,5 +15,13 @@ my $word = "representation";
 if ($hyp->visualize($word) ne 'rep-re-sen-ta-tion')
 	{ print "not "; }
 print "ok 2\n";
+
+if ($hyp->visualize('presents') ne 'presents')
+	{ print "not "; }
+print "ok 3\n";
+
+if ($hyp->visualize('declination') ne 'dec-li-na-tion')
+	{ print "not "; }
+print "ok 4\n";
 
 

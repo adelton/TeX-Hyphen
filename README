@@ -1,8 +1,7 @@
 
 Module TeX::Hyphen:
 
-	Hyphenate words using TeX's patterns. The latest version
-	includes TeX's default pattern file included.
+	Hyphenate words using TeX's patterns.
 
 Installation:
 

@@ -37,11 +37,14 @@ used in the Czech (and other) languages.
 
 =cut
 
-$VERSION = '0.05';
+use strict;
+use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN );
+
+$VERSION = '0.06';
 sub Version	{ $VERSION; }
 
 $DEBUG = 0;
-sub DEBUG	{ $DEBUG; }
+sub DEBUG ()	{ $DEBUG; }
 
 # To protect beginning and end of the word from hyphenation
 $LEFTMIN = 2;
@@ -50,11 +53,11 @@ $RIGHTMIN = 2;
 # ######################################################
 # TeX conversions done for Czech language, eg. \'a, \v r
 #
-%BACKV = ( 'c' => 'è', 'd' => 'ï', 'e' => 'ì', 'l' => 'µ',
+my %BACKV = ( 'c' => 'è', 'd' => 'ï', 'e' => 'ì', 'l' => 'µ',
 	'n' => 'ò', 'r' => 'ø', 's' => '¹', 't' => '»', 'z' => '¾',
 	'C' => 'È', 'D' => 'Ï', 'E' => 'Ì', 'L' => '¥', 'N' => 'Ò',
 	'R' => 'Ø', 'S' => '©', 'T' => '«', 'Z' => '®' );
-%BACKAP = ( 'a' => 'á', 'e' => 'é', 'i' => 'í', 'l' => 'å',
+my %BACKAP = ( 'a' => 'á', 'e' => 'é', 'i' => 'í', 'l' => 'å',
 	'o' => 'ó', 'u' => 'ú', 'y' => 'ý', 'A' => 'Á', 'E' => 'É',
 	'I' => 'Í', 'L' => 'Å', 'O' => 'Ó', 'U' => 'Ú', 'Y' => 'Ý');
 sub cstolower
@@ -80,18 +83,16 @@ sub new
 	bless $self, $class;
 
 	local ($/) = "\n";
-	my $notstarted = 1;
+	my ($tag, $value);
 	my %hyphen = ();
 	my %beginhyphen = ();
 	my %endhyphen = ();
 	my %bothhyphen = ();
+	my %exact = ();
 	while (<FILE>)
 		{
-		if ($notstarted)
-			{
-			$notstarted = 0 if (/\\patterns{/);
-			next;
-			}
+		next if 1 .. /\\patterns{/;
+		last if /^\}/;
 		chomp;
 
 		my $begin = 0;
@@ -105,7 +106,7 @@ sub new
 		s!^(?=\D)!0!;
 		($tag = $_) =~ s!\d!!g;
 		($value = $_) =~ s!\D!!g;
-
+	
 		if ($begin and $end)
 			{ $bothhyphen{$tag} = $value; }
 		elsif ($begin)
@@ -115,14 +116,36 @@ sub new
 		else
 			{ $hyphen{$tag} = $value; }
 		}
+	my $tell = $. + 1;
+	while (<FILE>)
+		{
+		next if (($tell == $.) .. /\\hyphenation{/);
+		last if /^\}/;
+
+		chomp;
+
+		s!\\v\s+(.)!$BACKV{$+}!g;
+		s!\\'(.)!$BACKAP{$+}!g;
+
+		($tag = $_) =~ s!-!!g;
+		($value = '0' . $_) =~ s![^-](?=[^-])!0!g;
+		$value =~ s![^-]-!1!g;
+		$value =~ s![^01]!0!g;
+		
+		$exact{$tag} = $value;
+		}
 	close FILE;
 	$self->{hyphen} = { %hyphen };
 	$self->{begin} = { %beginhyphen };
 	$self->{end} = { %endhyphen };
 	$self->{both} = { %bothhyphen };
-	print STDERR 'All ', scalar %hyphen,
+	$self->{exact} = { %exact };
+	print STDERR 'Statistics for ', (defined $file ? $file : 'hyphen.tex'),
+		': all ' , scalar %hyphen,
 		' (', scalar keys %hyphen,
-		'), begin ', scalar %beginhyphen,
+		'), exact ', scalar %exact,
+		' (', scalar keys %exact,
+		"),\n\tbegin ", scalar %beginhyphen,
 		' (', scalar keys %beginhyphen,
 		'), end ', scalar %endhyphen,
 		' (', scalar keys %endhyphen,
@@ -144,6 +167,9 @@ sub hyphenate
 	my $beginhyphen = $self->{beginhyphen};
 	my $endhyphen = $self->{endhyphen};
 	my $bothhyphen = $self->{endhyphen};
+	my $exact = $self->{exact};
+	return $self->make_result_list($exact->{$word})
+		if defined $exact->{$word};
 
 	my $totallength = length $word;
 	my @result = (0) x ($totallength + 1);
@@ -213,6 +239,22 @@ sub hyphenate
 	@out;
 	}
 
+# ####################
+#
+#
+sub make_result_list
+	{
+	my ($self, $result) = @_;
+	my @result = ();
+	my $i = 0;
+	while ($result =~ /./g)
+		{
+		push @result, $i if (int($&) % 2);
+		$i++;
+		}
+	@result;
+	}
+
 # #########################################
 # For a word show the result of hyphenation
 #
@@ -232,6 +274,10 @@ sub visualize
 =head1 CHANGES
 
 =over
+
+=item 0.06 Mon Jul 21 18:53:26 MET DST 1997
+
+Exception table handling added -- error spotted by Jon Orwant.
 
 =item 0.05 Wed Jul  9 14:49:42 MET DST 1997
 
@@ -256,7 +302,7 @@ Original name B<Hyphen> chaged to B<TeX::Hyphen>.
 
 =head1 VERSION
 
-0.05
+0.06
 
 =head1 SEE ALSO
 
