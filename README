@@ -1,27 +1,33 @@
 
-Module TeX::Hyphen:
+			---------------------------
+				TeX::Hyphen
+			---------------------------
 
-	Hyphenate words using TeX's patterns.
+This is the README file for the TeX::Hyphen module. This module uses
+TeX style hyphenation patterns to find places in words to hyphenate.
+You can supply any hyphenation file you like. The use goes like
 
-Installation:
-
-	perl Makefile.PL
-	make
-	make test
-	make install
-
-Use:
 	use TeX::Hyphen;
 	my $hyp = new TeX::Hyphen "hyphen.tex";
 	my $word = "representation";
 	my @points = $hyp->hyphenate($word);
 
+Installation:
+	perl Makefile.PL
+	make
+	make test
+	make install
+
+Problems and bug reports:
+	Please report bug reports to my address. Include word
+	TeX::Hyphen in the Subject line of your mail. If you find this
+	module usefull, let me know as well.
+
 Available:
+	http://www.fi.muni.cz/~adelton/perl/ and from your favorite
+	CPAN site in the authors/id/JANPAZ/ directory.
 
-	http://www.fi.muni.cz/~adelton/perl/ and on your favorite CPAN
-	site (http://www.perl.com/perl/CPAN/).
-
-Copyright: (c) 1997 Jan Pazdziora, adelton@fi.muni.cz. All rights
+Copyright: (c) 1997--1998 Jan Pazdziora, adelton@fi.muni.cz. All rights
 	reserved.  This program is free software; you can redistribute
 	it and/or modify it under the same terms as Perl itself. 
 

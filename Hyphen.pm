@@ -15,22 +15,31 @@ TeX::Hyphen -- hyphenate words using TeX's patterns
 
 =head1 DESCRIPTION
 
-Constructor TeX::Hyphen::new() creates a new Hyphen object and loads
-the file with patterns into memory. Then you can ask it for hyphenation
-of a word. If no file is specified, the default F<hyphen.tex>, that is
-appended at the end of this module, is used instead.
+Constructor new() creates a new Hyphen object and loads the file with
+patterns into memory. Then you can ask it for hyphenation of a word by
+calling a method of this object. If no file is specified, the default
+Donald E. Knuth's F<hyphen.tex>, that is included in this module, is
+used instead.
 
-Method TeX::Hyphen::hyphenate() returns list of places where the word
-can be divided, TeX::Hyphen::visualize() can be used to show them.
-The example above should give C<rep-re-sen-ta-tion>.
+Method hyphenate() returns list of places where the word can be
+divided, so
+
+	$hyp->visualize('representation')
+
+returns list (3, 5, 8, 10). Method visualize() can be used to show these
+poins, so
+
+	$hyp->visualize('representation')
+	
+should give C<rep-re-sen-ta-tion>.
 
 Variables I<$TeX::Hyphen::LEFTMIN> and I<$TeX::Hyphen::RIGHTMIN> can
 be used to restrict minimal starting and ending substring where it is
 not possible to hyphenate. They both default to 2 but should be
 changed to match the paratemers used to generate the patterns.
 
-Variable I<$TeX::Hyphen::DEBUG> will tell on standard error output the
-alocation of buckets.
+Variable I<$TeX::Hyphen::DEBUG> can be set to see some statistics and
+processing.
 
 The file with hyphenation patterns may contain C<\'> and C<\v> accents,
 used in the Czech (and other) languages.
@@ -40,11 +49,10 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN );
 
-$VERSION = '0.06';
-sub Version	{ $VERSION; }
+$VERSION = '0.10';
+sub Version ()	{ $VERSION; }
 
-$DEBUG = 0;
-sub DEBUG ()	{ $DEBUG; }
+$DEBUG ||= 0;
 
 # To protect beginning and end of the word from hyphenation
 $LEFTMIN = 2;
@@ -67,10 +75,10 @@ sub cstolower
 	$e;
 	}
 
-# ####################################################
+# #############################################################
 # Constructor. Parameter specifies file with patterns.
-# File is # searched for \patterns{ ... } section and
-# this is used.
+# File is searched for \patterns{ ... } and \hyphenation{ ... }
+# sections and these are used.
 #
 sub new
 	{
@@ -84,11 +92,11 @@ sub new
 
 	local ($/) = "\n";
 	my ($tag, $value);
-	my %hyphen = ();
-	my %beginhyphen = ();
-	my %endhyphen = ();
-	my %bothhyphen = ();
-	my %exact = ();
+	my $hyphen = {};
+	my $beginhyphen = {};
+	my $endhyphen = {};
+	my $bothhyphen = {};
+	my $exception = {};
 	while (<FILE>)
 		{
 		next if 1 .. /\\patterns{/;
@@ -106,20 +114,21 @@ sub new
 		s!^(?=\D)!0!;
 		($tag = $_) =~ s!\d!!g;
 		($value = $_) =~ s!\D!!g;
+		$tag = cstolower($tag);
 	
 		if ($begin and $end)
-			{ $bothhyphen{$tag} = $value; }
+			{ $bothhyphen->{$tag} = $value; }
 		elsif ($begin)
-			{ $beginhyphen{$tag} = $value; }
+			{ $beginhyphen->{$tag} = $value; }
 		elsif ($end)
-			{ $endhyphen{$tag} = $value; }
+			{ $endhyphen->{$tag} = $value; }
 		else
-			{ $hyphen{$tag} = $value; }
+			{ $hyphen->{$tag} = $value; }
 		}
 	my $tell = $. + 1;
 	while (<FILE>)
 		{
-		next if (($tell == $.) .. /\\hyphenation{/);
+		next if (( $. == $tell) .. /\\hyphenation{/);
 		last if /^\}/;
 
 		chomp;
@@ -128,30 +137,32 @@ sub new
 		s!\\'(.)!$BACKAP{$+}!g;
 
 		($tag = $_) =~ s!-!!g;
+		$tag = cstolower($tag);
 		($value = '0' . $_) =~ s![^-](?=[^-])!0!g;
 		$value =~ s![^-]-!1!g;
 		$value =~ s![^01]!0!g;
 		
-		$exact{$tag} = $value;
+		$exception->{$tag} = $value;
 		}
 	close FILE;
-	$self->{hyphen} = { %hyphen };
-	$self->{begin} = { %beginhyphen };
-	$self->{end} = { %endhyphen };
-	$self->{both} = { %bothhyphen };
-	$self->{exact} = { %exact };
+	$self->{hyphen} = $hyphen;
+	$self->{begin} = $beginhyphen;
+	$self->{end} = $endhyphen;
+	$self->{both} = $bothhyphen;
+	$self->{exception} = $exception;
 	print STDERR 'Statistics for ', (defined $file ? $file : 'hyphen.tex'),
-		': all ' , scalar %hyphen,
-		' (', scalar keys %hyphen,
-		'), exact ', scalar %exact,
-		' (', scalar keys %exact,
-		"),\n\tbegin ", scalar %beginhyphen,
-		' (', scalar keys %beginhyphen,
-		'), end ', scalar %endhyphen,
-		' (', scalar keys %endhyphen,
-		'), both ', scalar %bothhyphen,
-		' (', scalar keys %bothhyphen, ")\n" if DEBUG;
-		
+		': all ' , scalar %$hyphen,
+		' (', scalar keys %$hyphen,
+		'), exception ', scalar %$exception,
+		' (', scalar keys %$exception,
+		"),\n\tbegin ", scalar %$beginhyphen,
+		' (', scalar keys %$beginhyphen,
+		'), end ', scalar %$endhyphen,
+		' (', scalar keys %$endhyphen,
+		'), both ', scalar %$bothhyphen,
+		' (', scalar keys %$bothhyphen, ")\n" if $DEBUG;
+	
+	$self->{exact} = { %$exception };
 	$self;
 	}
 
@@ -162,14 +173,20 @@ sub new
 sub hyphenate
 	{
 	my ($self, $word) = (shift, shift);
+
+	print STDERR "Hyphenate `$word'\n" if $DEBUG;
 	
-	my $hyphen = $self->{hyphen};
-	my $beginhyphen = $self->{beginhyphen};
-	my $endhyphen = $self->{endhyphen};
-	my $bothhyphen = $self->{endhyphen};
 	my $exact = $self->{exact};
-	return $self->make_result_list($exact->{$word})
-		if defined $exact->{$word};
+	if (defined(my $res = $exact->{$word}))
+		{
+		print STDERR "Exact match $res\n" if $DEBUG;
+		return $self->make_result_list($res);
+		}
+
+	my $hyphen = $self->{hyphen};
+	my $beginhyphen = $self->{begin};
+	my $endhyphen = $self->{end};
+	my $bothhyphen = $self->{both};
 
 	my $totallength = length $word;
 	my @result = (0) x ($totallength + 1);
@@ -179,64 +196,70 @@ sub hyphenate
 	my $pos;
 	for ($pos = 0; $pos <= $rightstop; $pos++)
 		{
-		# length of the rest of the word
+			# length of the rest of the word
 		my $restlength = $totallength - $pos;
-		# length of a substring
+			# length of a substring
 		my $length;
 		for ($length = 1; $length <= $restlength; $length++)
 			{
 			my $substr = substr $word, $pos, $length;
 			my $value;
 			my $j;
-			if ($value = $hyphen->{$substr})
+			my $letter;
+			if (defined($value = $hyphen->{$substr}))
 				{
 				$j = $pos;
-				while ($value =~ /(.)/sg)
+				print STDERR "$j: $substr: $value\n" if $DEBUG > 2;
+				while ($value =~ /(.)/gs)
 					{
-					$result[$j] = $+ if ($+ > $result[$j]);
+					$result[$j] = $1 if ($1 > $result[$j]);
 					$j++;
 					}
 				}
-			if (($pos == 0) and $value = $beginhyphen->{$substr})
+			if (($pos == 0) and
+				defined($value = $beginhyphen->{$substr}))
 				{
-				$j = $pos;
-				while ($value =~ /(.)/sg)
+				$j = 0;
+				print STDERR "$j: $substr: $value\n" if $DEBUG > 2;
+				while ($value =~ /(.)/gs)
 					{
-					$result[$j] = $+ if ($+ > $result[$j]);
+					$result[$j] = $1 if ($1 > $result[$j]);
 					$j++;
 					}
 				}
 			if (($restlength == $length) and
-				$value = $endhyphen->{$substr})
+				defined($value = $endhyphen->{$substr}))
 				{
 				$j = $pos;
-				while ($value =~ /(.)/sg)
+				print STDERR "$j: $substr: $value\n" if $DEBUG > 2;
+				while ($value =~ /(.)/gs)
 					{
-					$result[$j] = $+ if ($+ > $result[$j]);
+					$result[$j] = $1 if ($1 > $result[$j]);
 					$j++;
 					}
 				}
 			}
 		}
 	my $value;
-	if ($value = $bothhyphen->{$word})
+	my $letter;
+	if (defined($value = $bothhyphen->{$word}))
 		{
-		my $j = $pos;
-		while ($value =~ /(.)/sg)
+		my $j = 0;
+		print STDERR "$j: $word: $value\n" if $DEBUG > 2;
+		while ($value =~ /(.)/gs)
 			{
-			$result[$j] = $+ if ($+ > $result[$j]);
+			$result[$j] = $1 if ($1 > $result[$j]);
 			$j++;
 			}
-
 		}
 
-	$result[0] = 0;
-	my @out = ();
-	for $pos ($LEFTMIN .. $rightstop)
-		{
-		push @out, $pos if ($result[$pos] % 2);
-		}
-	@out;
+	my $result = join '', @result;
+	### substr($result, 0, $LEFTMIN + 1) = '0' x ($LEFTMIN + 1);
+	substr($result, 0, $LEFTMIN) = '0' x $LEFTMIN;
+	substr($result, -$RIGHTMIN) = '0' x $RIGHTMIN;
+
+	print STDERR "Result: $result\n" if $DEBUG;
+	return $self->make_result_list($result);
 	}
 
 # ####################
@@ -275,6 +298,11 @@ sub visualize
 
 =over
 
+=item 0.10 Fri Dec 11 10:58:01 MET 1998
+
+Bug fixes concering LEFTMIN and RIGHTMIN values and use of exceptions
+(thanks go to Vladimir Volovich).
+
 =item 0.06 Mon Jul 21 18:53:26 MET DST 1997
 
 Exception table handling added -- error spotted by Jon Orwant.
@@ -302,7 +330,7 @@ Original name B<Hyphen> chaged to B<TeX::Hyphen>.
 
 =head1 VERSION
 
-0.06
+0.10
 
 =head1 SEE ALSO
 
