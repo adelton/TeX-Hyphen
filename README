@@ -24,11 +24,14 @@ Problems and bug reports:
 	word Help in the Subject line of your mail. If you find this
 	module usefull, I'd appreciate if you let me know as well.
 
-Available:
-	http://www.fi.muni.cz/~adelton/perl/ and from your favorite
+Available from:
+	http://www.adelton.com/perl/TeX-Hyphen/ and from your favorite
 	CPAN site in the authors/id/JANPAZ/ directory.
 
-Copyright: (c) 1997--2001 Jan Pazdziora, adelton@fi.muni.cz. All rights
-	reserved.  This program is free software; you can redistribute
-	it and/or modify it under the same terms as Perl itself. 
+	Contact the author at jpx dash perl at adelton dot com.
+
+Copyright: (c) 1997--2011 Jan Pazdziora.
+	All rights reserved. This program is free software; you can
+	redistribute it and/or modify it under the same terms as Perl
+	itself. 
 

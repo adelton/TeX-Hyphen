@@ -95,7 +95,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '0.140';
+$VERSION = '1.01';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -368,16 +368,24 @@ Original name B<Hyphen> chaged to B<TeX::Hyphen>.
 
 =head1 VERSION
 
-0.140
+1.01
+
+=head1 AVAILABLE FROM
+
+http://www.adelton.com/perl/TeX-Hyphen/
+
+=head1 AUTHOR
+
+(c) 1997--2011 Jan Pazdziora.
+
+All rights reserved. This package is free software; you can
+redistribute it and/or modify it under the same terms as Perl itself.
+
+Contact the author at jpx dash perl at adelton dot com.
 
 =head1 SEE ALSO
 
 perl(1), TeX::Hyphen::czech.
-
-=head1 AUTHOR
-
-(c) 1997--2002 Jan Pazdziora, adelton@fi.muni.cz
-at Faculty of Informatics, Masaryk University, Brno
 
 =cut
 
