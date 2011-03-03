@@ -322,50 +322,6 @@ sub visualize {
 	$word;
 }
 
-=head1 CHANGES
-
-=over
-
-=item 0.110 Tue Dec 11 14:26:15 MET 2001
-
-Support for more languages made modular, code for German parsing
-provided by Slaven Rezic.
-
-=item 0.101 Wed Nov  3 16:06:02 MET 1999
-
-Parsing of patterns extended to allow other styles as well -- Spanish
-pattern file provided by Adrian Perez Jorge.
-
-=item 0.10 Fri Dec 11 10:58:01 MET 1998
-
-Bug fixes concering LEFTMIN and RIGHTMIN values and use of exceptions
-(thanks go to Vladimir Volovich).
-
-=item 0.06 Mon Jul 21 18:53:26 MET DST 1997
-
-Exception table handling added -- error spotted by Jon Orwant.
-
-=item 0.05 Wed Jul  9 14:49:42 MET DST 1997
-
-Added the default F<hyphen.tex> into the module and possibility to
-call the constructior without argument to get this default pattern
-file.
-
-=item 0.04 Wed Apr  9 15:41:32 MET DST 1997
-
-Hash lookup made faster.
-
-Method TeX::Hyphen::visualize() only takes one argument, it calls
-hyphenate().
-
-=item 0.03 Sun Feb 16 13:55:26 MET 1997
-
-Hash lookup made faster.
-
-Original name B<Hyphen> chaged to B<TeX::Hyphen>.
-
-=back
-
 =head1 VERSION
 
 1.01
