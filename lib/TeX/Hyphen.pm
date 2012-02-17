@@ -149,6 +149,9 @@ sub new {
 		$opts{'style'} = 'czech';	# for backward compatibility
 	}
 	if (defined $opts{'style'}) {
+		if ($opts{'style'} eq 'utf8') {
+			binmode(FILE,':utf8');
+		}
 		eval qq!use ${class}::$opts{'style'}!;
 		if (not $@) {
 			eval "\$process_patterns = \\&${class}::$opts{'style'}::process_patterns";
