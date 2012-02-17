@@ -257,7 +257,7 @@ sub hyphenate {
 			if (($pos == 0) and
 				defined($value = $beginhyphen->{$substr})) {
 				$j = 0;
-				print STDERR "$j: $substr: $value\n" if $DEBUG > 2;
+				print STDERR "$j: .$substr: $value\n" if $DEBUG > 2;
 				while ($value =~ /(.)/gs) {
 					$result[$j] = $1 if ($1 > $result[$j]);
 					$j++;
@@ -266,7 +266,7 @@ sub hyphenate {
 			if (($restlength == $length) and
 				defined($value = $endhyphen->{$substr})) {
 				$j = $pos;
-				print STDERR "$j: $substr: $value\n" if $DEBUG > 2;
+				print STDERR "$j: $substr.: $value\n" if $DEBUG > 2;
 				while ($value =~ /(.)/gs) {
 					$result[$j] = $1 if ($1 > $result[$j]);
 					$j++;
@@ -278,7 +278,7 @@ sub hyphenate {
 	my $letter;
 	if (defined($value = $bothhyphen->{$word})) {
 		my $j = 0;
-		print STDERR "$j: $word: $value\n" if $DEBUG > 2;
+		print STDERR "$j: .$word.: $value\n" if $DEBUG > 2;
 		while ($value =~ /(.)/gs) {
 			$result[$j] = $1 if ($1 > $result[$j]);
 			$j++;
