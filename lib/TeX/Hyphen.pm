@@ -234,7 +234,7 @@ sub hyphenate {
 	my @result = (0) x ($totallength + 1);
 
 	# walk the word
-	my $rightstop = $totallength - $RIGHTMIN;
+	my $rightstop = $totallength - $self->{rightmin};
 	my $pos;
 	for ($pos = 0; $pos <= $rightstop; $pos++) {
 			# length of the rest of the word
