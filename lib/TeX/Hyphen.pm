@@ -95,7 +95,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '1.01';
+$VERSION = '1.02';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -301,8 +301,8 @@ sub make_result_list {
 	my ($self, $result) = @_;
 	my @result = ();
 	my $i = 0;
-	while ($result =~ /./g) {
-		push @result, $i if (int($&) % 2);
+	while ($result =~ /(.)/g) {
+		push @result, $i if (int($1) % 2);
 		$i++;
 	}
 	@result;
@@ -324,7 +324,7 @@ sub visualize {
 
 =head1 VERSION
 
-1.01
+1.02
 
 =head1 AVAILABLE FROM
 

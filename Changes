@@ -1,4 +1,8 @@
 
+1.02 Tue Jan 20 21:39:34 CET 2015
+
+	Do not ruin performance, stop using $&.
+
 1.01 Thu Mar  3 21:20:00 CET 2011
 
 	Updating the upstream URL to
