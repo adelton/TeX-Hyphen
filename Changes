@@ -1,4 +1,6 @@
 
+	RT#82513: Fix pattern file closing, reported by Knut Arne Bjørndal.
+
 1.15 Wed Jan 21 20:59:51 CET 2015
 
 	Add style utf8.

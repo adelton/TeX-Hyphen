@@ -192,7 +192,7 @@ sub new {
 
 		last unless $process_hyphenation->($_, $exception);
 	}
-	close FILE if not defined $file;
+	close FILE if defined $file;
 	$self->{hyphen} = $hyphen;
 	$self->{begin} = $beginhyphen;
 	$self->{end} = $endhyphen;
