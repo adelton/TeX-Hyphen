@@ -124,6 +124,7 @@ sub new {
 		%opts = @_;
 		$file = $opts{'file'};
 	}
+	local *FILE;
 	if (not defined $file) {
 		if (not defined $DATA_LOADED) {
 			@DATA = <DATA>;
@@ -169,28 +170,23 @@ sub new {
 	$leftmin = $opts{leftmin} if exists $opts{leftmin};
 	$rightmin = $opts{rightmin} if exists $opts{rightmin};
 
+	my ($in_patterns, $in_hyphenation) = (0, 0);
 	my $i = 0;
 	while ((defined $file and defined($_ = <FILE>))
-		or (not defined $file and defined($_ = $DATA[$i]))) {
-		$i++;
+		or (not defined $file and defined($_ = $DATA[$i++]))) {
 		s/\%.*$//;			# comment out
-		next if 1 .. /\\patterns{/;	# find the \patterns section
-		
 		chomp;
-
-		last unless
-			$process_patterns->($_, $bothhyphen, $beginhyphen,
-			$endhyphen, $hyphen);
-	}
-	my $tell = $i + 1;
-	while ((defined $file and defined($_ = <FILE>))
-		or (not defined $file and defined($_ = $DATA[$i]))) {
-		$i++;
-		next if (( $i == $tell) .. /\\hyphenation{/);
-
-		chomp;
-
-		last unless $process_hyphenation->($_, $exception);
+		if ($in_patterns) {
+			$in_patterns = $process_patterns->($_,
+				$bothhyphen, $beginhyphen,
+				$endhyphen, $hyphen);
+		} elsif ($in_hyphenation) {
+			$in_hyphenation = $process_hyphenation->($_, $exception);
+		} elsif (/\\patterns{/) {	# find the \patterns section
+			$in_patterns = 1;
+		} elsif (/\\hyphenation{/) {
+			$in_hyphenation = 1;
+		}
 	}
 	close FILE if defined $file;
 	$self->{hyphen} = $hyphen;
