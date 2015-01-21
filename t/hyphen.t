@@ -2,7 +2,7 @@
 
 use strict;
 
-BEGIN { $| = 1; print "1..16\n"; }
+BEGIN { $| = 1; print "1..17\n"; }
 
 END {print "not ok 1\n" unless $::loaded_hyphen;}
 
@@ -75,3 +75,6 @@ if (not defined $hypdup) {
 print "ok 15\n";
 
 test_hyp 16, $hypdup, 'declination', 'dec-li-na-tion';
+
+my $hyp3 = new TeX::Hyphen rightmin => 4;
+test_hyp 17, $hyp3, 'twilynx', 'twilynx';
