@@ -34,5 +34,5 @@ my $t2 = new Benchmark;
 my $td = timediff($t2, $t1);
 print STDERR "the code took:",timestr($td),"\n";
 
-print "ok\2";
+print "ok 2\n";
 
