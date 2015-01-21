@@ -2,7 +2,7 @@
 
 use strict;
 
-BEGIN { $| = 1; print "1..17\n"; }
+BEGIN { $| = 1; print "1..21\n"; }
 
 END {print "not ok 1\n" unless $::loaded_hyphen;}
 
@@ -78,3 +78,14 @@ test_hyp 16, $hypdup, 'declination', 'dec-li-na-tion';
 
 my $hyp3 = new TeX::Hyphen rightmin => 4;
 test_hyp 17, $hyp3, 'twilynx', 'twilynx';
+
+my $hyp4 = new TeX::Hyphen "t/utf8.tex";
+test_hyp 18, $hyp4, 'žížala', 'ž-í-ža-la';
+use utf8;
+test_hyp 19, $hyp4, 'žížala', 'žíža-la';
+
+my $hyp5 = new TeX::Hyphen "t/utf8.tex", style => "utf8";
+no utf8;
+test_hyp 20, $hyp5, 'žížala', 'žíža-la';
+use utf8;
+test_hyp 21, $hyp5, 'žížala', 'ží-ža-la';
