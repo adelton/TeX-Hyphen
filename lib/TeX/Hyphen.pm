@@ -12,6 +12,9 @@ TeX::Hyphen -- hyphenate words using TeX's patterns
 		'style' => 'czech', leftmin => 2,
 		rightmin => 2;
 
+	my $hyp = new TeX::Hyphen 'file' => 'hyphen.tex',
+		'style' => 'utf8';
+
 	# my $hyp = new TeX::Hyphen "hyphen.tex";
 
 	my $word = "representation";
@@ -47,9 +50,9 @@ Instead of doing the full TeX expansion, we use Perl code to parse the
 patterns. The style option loads TeX::Hyphen::name_of_the_style module
 and uses the parsing functions found in it.
 
-Currently, the default czech (which also works for English alright)
-and german are available. See the TeX::Hyphen::czech man page for more
-information, especially if you want to support other
+Currently, the default czech (which also works for English alright),
+german, and utf8 are available. See the TeX::Hyphen::czech man page
+for more information, especially if you want to support other
 languages/styles.
 
 =item leftmin
@@ -95,7 +98,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '1.02';
+$VERSION = '1.15';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -327,7 +330,7 @@ sub visualize {
 
 =head1 VERSION
 
-1.02
+1.15
 
 =head1 AVAILABLE FROM
 
@@ -335,7 +338,7 @@ http://www.adelton.com/perl/TeX-Hyphen/
 
 =head1 AUTHOR
 
-(c) 1997--2011 Jan Pazdziora.
+(c) 1997--2015 Jan Pazdziora.
 
 All rights reserved. This package is free software; you can
 redistribute it and/or modify it under the same terms as Perl itself.

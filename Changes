@@ -1,7 +1,15 @@
 
+1.15 Wed Jan 21 20:59:51 CET 2015
+
+	Add style utf8.
+	Debug output shows dots to mark end patterns.
+	Minor performance improvement related to rightmin.
+	Contributed by David Gardner.
+
 1.02 Tue Jan 20 21:39:34 CET 2015
 
 	Do not ruin performance, stop using $&.
+	Patch by Nicolas Mendoza.
 
 1.01 Thu Mar  3 21:20:00 CET 2011
 

@@ -5,5 +5,7 @@ README
 lib/TeX/Hyphen.pm
 lib/TeX/Hyphen/czech.pm
 lib/TeX/Hyphen/german.pm
+lib/TeX/Hyphen/utf8.pm
 t/hyphen.t
 t/xbench.t
+t/utf8.tex
