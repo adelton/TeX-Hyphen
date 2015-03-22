@@ -1,4 +1,6 @@
 
+1.16 Sun Mar 22 19:18:22 CET 2015
+
 	RT#82513: Fix pattern file closing, reported by Knut Arne Bjørndal.
 	Localized * FILE.
 

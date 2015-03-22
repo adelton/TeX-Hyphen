@@ -98,7 +98,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '1.15';
+$VERSION = '1.16';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -326,7 +326,7 @@ sub visualize {
 
 =head1 VERSION
 
-1.15
+1.16
 
 =head1 AVAILABLE FROM
 
