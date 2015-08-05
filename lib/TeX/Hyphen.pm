@@ -182,9 +182,9 @@ sub new {
 				$endhyphen, $hyphen);
 		} elsif ($in_hyphenation) {
 			$in_hyphenation = $process_hyphenation->($_, $exception);
-		} elsif (/\\patterns{/) {	# find the \patterns section
+		} elsif (/\\patterns\{/) {	# find the \patterns section
 			$in_patterns = 1;
-		} elsif (/\\hyphenation{/) {
+		} elsif (/\\hyphenation\{/) {
 			$in_hyphenation = 1;
 		}
 	}
