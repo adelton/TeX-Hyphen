@@ -98,7 +98,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '1.16';
+$VERSION = '1.17';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -326,7 +326,7 @@ sub visualize {
 
 =head1 VERSION
 
-1.16
+1.17
 
 =head1 AVAILABLE FROM
 
@@ -334,7 +334,7 @@ http://www.adelton.com/perl/TeX-Hyphen/
 
 =head1 AUTHOR
 
-(c) 1997--2015 Jan Pazdziora.
+(c) 1997--2016 Jan Pazdziora.
 
 All rights reserved. This package is free software; you can
 redistribute it and/or modify it under the same terms as Perl itself.

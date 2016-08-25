@@ -1,4 +1,8 @@
 
+1.17 Thu Aug 25 20:12:12 CEST 2016
+
+	RT#117217: Fix compile errors on Perl 5.25.
+
 1.16 Sun Mar 22 19:18:22 CET 2015
 
 	RT#82513: Fix pattern file closing, reported by Knut Arne Bjørndal.
