@@ -1,4 +1,8 @@
 
+1.18 Mon Dec 12 23:07:57 CET 2016
+
+	Fixing docs typo.
+
 1.17 Thu Aug 25 20:12:12 CEST 2016
 
 	RT#117217: Fix compile errors on Perl 5.25.

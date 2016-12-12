@@ -72,7 +72,7 @@ overrides the default specified in the style file.
 Method hyphenate() returns list of places where the word can be
 divided, so
 
-	$hyp->visualize('representation')
+	$hyp->hyphenate('representation')
 
 returns list (3, 5, 8, 10).
 
@@ -98,7 +98,7 @@ used in the Czech (and other) languages.
 use strict;
 use vars qw( $VERSION $DEBUG $LEFTMIN $RIGHTMIN $errstr );
 
-$VERSION = '1.17';
+$VERSION = '1.18';
 sub Version ()	{ $VERSION; }
 
 $DEBUG ||= 0;
@@ -326,7 +326,7 @@ sub visualize {
 
 =head1 VERSION
 
-1.17
+1.18
 
 =head1 AVAILABLE FROM
 
